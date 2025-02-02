@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>⌇⌇⌇⌇⌇</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      background-color: #0a0a0a;
+      color: #fbfbfb;
+      font-family: serif;
+      line-height: 1.6;
+      cursor: crosshair;
+      overflow: hidden;
+    }
+
+    .reverse-door {
+      position: fixed;
+      width: 60px;
+      height: 100px;
+      left: 20px;
+      top: 20px;
+      transform: scaleX(-1);
+      cursor: pointer;
+      opacity: 0.7;
+      transition: opacity 0.3s;
+    }
+
+    .reverse-door:hover {
+      opacity: 1;
+    }
+
+    .content {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      width: 80%;
+    }
+
+    .message {
+      margin: 20px 0;
+      opacity: 0;
+      animation: fadeIn 4s forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 0.7; }
+    }
+
+    .flicker {
+      animation: flicker 8s infinite;
+    }
+
+    @keyframes flicker {
+      0%, 100% { opacity: 0.7; }
+      50% { opacity: 0.3; }
+    }
+  </style>
+</head>
+<body>
+  <div class="reverse-door clickable">
+    <svg viewBox="0 0 60 100">
+      <rect x="0" y="0" width="60" height="100" fill="none" stroke="#fbfbfb" stroke-width="2" />
+      <rect x="5" y="5" width="50" height="90" fill="#fbfbfb" />
+      <circle cx="45" cy="50" r="3" fill="#666" />
+    </svg>
+  </div>
+  
+  <div class="content">
+    <div class="message">you shouldn't have opened that door</div>
+    <div class="message flicker">now it knows where you are</div>
+    <div class="message">the way back might not lead where you came from</div>
+  </div>
+
+  <script>
+    // Audio Context Setup
+    let audioCtx;
+    let staticSound;
+    
+    const initAudio = () => {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    };
+
+    // Create continuous static/hum sound with more prominent unsettling characteristics
+    const createStaticHum = () => {
+      if (!audioCtx) initAudio();
+      
+      // Create multiple oscillators for a richer texture
+      const noise = audioCtx.createOscillator();
+      const noise2 = audioCtx.createOscillator();
+      const noise3 = audioCtx.createOscillator();
+      const noise4 = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      const filter = audioCtx.createBiquadFilter();
+      const resonanceFilter = audioCtx.createBiquadFilter();
+      
+      // Main filter for the base hum
+      filter.type = 'bandpass';
+      filter.frequency.value = 85;
+      filter.Q.value = 2.5;
+      
+      // Second filter for resonance
+      resonanceFilter.type = 'peaking';
+      resonanceFilter.frequency.value = 120;
+      resonanceFilter.Q.value = 4;
+      resonanceFilter.gain.value = 3;
+      
+      // Configure oscillators for more complex sound
+      noise.type = 'sawtooth';
+      noise.frequency.value = 57;
+      
+      noise2.type = 'sine';
+      noise2.frequency.value = 60;
+      
+      noise3.type = 'triangle';
+      noise3.frequency.value = 53;
+
+      noise4.type = 'sine';
+      noise4.frequency.value = 63;
+      
+      // Increased volume but still safe
+      gainNode.gain.value = 0.015;
+      
+      // Connect nodes with both filters
+      noise.connect(filter);
+      noise2.connect(filter);
+      noise3.connect(filter);
+      noise4.connect(filter);
+      filter.connect(resonanceFilter);
+      resonanceFilter.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      
+      // Start oscillators
+      noise.start();
+      noise2.start();
+      noise3.start();
+      noise4.start();
+      
+      // Store references for cleanup
+      staticSound = {
+        oscillators: [noise, noise2, noise3, noise4],
+        gainNode,
+        filter,
+        resonanceFilter
+      };
+      
+      // More frequent and pronounced modulation
+      setInterval(() => {
+        if (Math.random() < 0.4) {
+          filter.frequency.value = 85 + Math.random() * 30;
+          resonanceFilter.frequency.value = 120 + Math.random() * 40;
+          gainNode.gain.value = 0.015 + Math.random() * 0.008;
+          
+          // Subtle detuning for added unease
+          noise.frequency.value = 57 + Math.random() * 2;
+          noise2.frequency.value = 60 + Math.random() * 2;
+          noise3.frequency.value = 53 + Math.random() * 2;
+          noise4.frequency.value = 63 + Math.random() * 2;
+        }
+      }, 800);
+
+      // Add occasional subtle pulses
+      setInterval(() => {
+        if (Math.random() < 0.2) {
+          gainNode.gain.setValueAtTime(gainNode.gain.value * 1.5, audioCtx.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.015, audioCtx.currentTime + 0.3);
+        }
+      }, 2000);
+    };
+
+    // Stop sound when leaving page
+    window.addEventListener('beforeunload', () => {
+      if (staticSound) {
+        staticSound.oscillators.forEach(osc => osc.stop());
+        staticSound.gainNode.disconnect();
+      }
+    });
+
+    // Start ambient sound
+    createStaticHum();
+
+    // Door code
+    document.querySelector('.reverse-door').addEventListener('click', () => {
+      createDoorSound();
+      document.querySelector('.reverse-door').style.transform = 'scaleX(-1) rotateY(-85deg)';
+      
+      // Stop static sound before navigation
+      if (staticSound) {
+        staticSound.oscillators.forEach(osc => osc.stop());
+        staticSound.gainNode.disconnect();
+      }
+      
+      setTimeout(() => {
+        window.location.href = 'index.html';
+      }, 1000);
+    });
+
+    // Create door sound
+    const createDoorSound = () => {
+      if (!audioCtx) initAudio();
+      
+      const duration = 1;
+      const osc = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      const filter = audioCtx.createBiquadFilter();
+      
+      filter.type = 'bandpass';
+      filter.frequency.value = 200;
+      filter.Q.value = 10;
+      
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(100, audioCtx.currentTime);
+      osc.frequency.linearRampToValueAtTime(50, audioCtx.currentTime + duration);
+      
+      gainNode.gain.setValueAtTime(0.015, audioCtx.currentTime);
+      gainNode.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+      
+      osc.connect(filter);
+      filter.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration);
+    };
+
+    // Subtle text manipulation
+    setInterval(() => {
+      const messages = document.querySelectorAll('.message');
+      messages.forEach(msg => {
+        if (Math.random() < 0.05) {
+          const chars = msg.textContent.split('');
+          const pos = Math.floor(Math.random() * chars.length);
+          chars[pos] = '⌇';
+          msg.textContent = chars.join('');
+        }
+      });
+    }, 1000);
+  </script>
+</body>
+</html>
