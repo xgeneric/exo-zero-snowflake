@@ -300,11 +300,209 @@ p {
 }
 
 @keyframes hellShake {
-  0%, 100% { transform: translate(0); }
-  25% { transform: translate(-2px, 2px); }
-  75% { transform: translate(2px, -2px); }
+  0%, 100% { transform: translate(0) skew(0deg); }
+  25% { transform: translate(-5px, 5px) skew(5deg); }
+  50% { transform: translate(5px, -5px) skew(-5deg); }
+  75% { transform: translate(-5px, -5px) skew(5deg); }
+}
+
+.hell-text {
+  font-family: serif;
+  letter-spacing: 2px;
+  text-shadow: 0 0 10px red;
 }
 
 .hell-mode {
-  animation: hellShake 0.5s infinite;
+  animation: hellShake 0.3s infinite;
+  filter: contrast(1.2) brightness(0.8);
+}
+
+.hell-mode p, .hell-mode .message {
+  transition: all 0.3s;
+}
+
+.hell-container {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 40px;
+  background: #0a0a0a;
+  overflow: hidden;
+  padding: 40px;
+  box-sizing: border-box;
+  min-height: 100vh;
+}
+
+.hell-message {
+  color: #ff0000;
+  font-size: 2em;
+  font-family: serif;
+  letter-spacing: 2px;
+  opacity: 0;
+  text-align: center;
+  transform: translateY(20px);
+  animation: fadeInUp 2s forwards;
+  cursor: pointer;
+  transition: all 0.3s;
+  max-width: 80%;
+  margin: 0 auto;
+}
+
+.hell-message.welcome {
+  font-size: 3em;
+  animation: fadeInUp 2s forwards, subtleFloat 4s infinite;
+}
+
+.hell-message.delayed-1 {
+  animation-delay: 1.5s;
+}
+
+.hell-message.delayed-2 {
+  animation-delay: 3s;
+}
+
+.hell-message.delayed-3 {
+  animation-delay: 4.5s;
+  font-family: monospace;
+}
+
+.hell-background {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: 
+    repeating-radial-gradient(
+      circle at 50% 50%,
+      #0a0a0a,
+      #1a0000 300px
+    );
+  opacity: 0;
+  animation: pulseBackground 10s infinite alternate;
+}
+
+.hell-message:hover {
+  text-shadow: 0 0 20px #ff0000;
+  transform: scale(1.1);
+}
+
+.hell-soul {
+  position: absolute;
+  font-size: 1.5em;
+  color: #ff0000;
+  opacity: 0.5;
+  pointer-events: all;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.hell-soul:hover {
+  opacity: 1;
+  text-shadow: 0 0 10px #ff0000;
+}
+
+.torture-chamber {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  background: rgba(20, 0, 0, 0.9);
+  padding: 40px;
+  border: 2px solid #ff0000;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  z-index: 1000;
+  opacity: 0;
+  transition: all 0.5s;
+}
+
+.torture-chamber.active {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+}
+
+.torture-option {
+  color: #ff0000;
+  background: none;
+  border: 1px solid #ff0000;
+  padding: 10px 20px;
+  font-family: serif;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.torture-option:hover {
+  background: rgba(255, 0, 0, 0.2);
+  transform: scale(1.05);
+}
+
+.pentagram {
+  display: none;
+}
+
+.ritual-circle {
+  display: none;
+}
+
+.damned-counter {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  color: #ff0000;
+  font-family: monospace;
+  font-size: 1.2em;
+  opacity: 0.7;
+}
+
+.soul-container {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+.screaming-face {
+  position: fixed;
+  font-size: 5em;
+  color: #ff0000;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.5s;
+}
+
+.screaming-face.active {
+  opacity: 0.3;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes subtleFloat {
+  0%, 100% {
+    transform: translateY(0) rotate(-1deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(1deg);
+  }
+}
+
+@keyframes pulseBackground {
+  0% {
+    opacity: 0.2;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.4;
+    transform: scale(1.1);
+  }
 }
