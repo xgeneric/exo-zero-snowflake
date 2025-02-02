@@ -408,12 +408,38 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.appendChild(hellEffect);
     
     let trainSound = null;
+    let textCorruptionInterval;
     
     hellBtn.addEventListener('click', () => {
       train.classList.add('moving', 'hell');
       trainSound = createTrainSound();
       hellEffect.classList.add('active');
       document.body.classList.add('hell-mode');
+      
+      // Start aggressive text corruption
+      textCorruptionInterval = setInterval(() => {
+        document.querySelectorAll('p, .message').forEach(element => {
+          const text = element.textContent;
+          const chars = text.split('');
+          
+          // Corrupt more characters as time goes on
+          const corruptionCount = Math.floor(Math.random() * 5) + 3;
+          
+          for(let i = 0; i < corruptionCount; i++) {
+            const pos = Math.floor(Math.random() * chars.length);
+            const corruptions = ['⌇', '✧', '✴', '❍', '☓', '✺', '⚊'];
+            chars[pos] = corruptions[Math.floor(Math.random() * corruptions.length)];
+          }
+          
+          element.textContent = chars.join('');
+          
+          // Add glitch effect to some elements
+          if(Math.random() < 0.3) {
+            element.style.transform = `skew(${Math.random() * 20 - 10}deg)`;
+            element.style.filter = `hue-rotate(${Math.random() * 360}deg)`;
+          }
+        });
+      }, 100); // Run very frequently
       
       // Progressively make things more hellish
       let hellLevel = 0;
@@ -426,16 +452,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Make shapes more aggressive
         document.querySelectorAll('.shape').forEach(shape => {
           shape.style.transform = `scale(${1 + hellLevel * 0.5}) rotate(${hellLevel * 45}deg)`;
-        });
-        
-        // Make text more disturbing
-        document.querySelectorAll('p').forEach(p => {
-          if (Math.random() < hellLevel * 0.2) {
-            const chars = p.textContent.split('');
-            const pos = Math.floor(Math.random() * chars.length);
-            chars[pos] = '⌇';
-            p.textContent = chars.join('');
-          }
+          shape.style.filter = `brightness(${2 - hellLevel}) contrast(${1 + hellLevel * 2})`;
         });
         
         if (hellLevel >= 1) {
@@ -445,15 +462,304 @@ document.addEventListener('DOMContentLoaded', () => {
       
       // End sequence
       setTimeout(() => {
+        clearInterval(textCorruptionInterval);
         if (trainSound) {
           trainSound.oscillators.forEach(osc => osc.stop());
           trainSound.gainNode.disconnect();
         }
-        document.body.innerHTML = '<p style="color: red;">welcome home</p>';
+        document.body.innerHTML = `
+          <div class="hell-container">
+            <div class="hell-message welcome">welcome home</div>
+            <div class="hell-message delayed-1">we've been expecting you</div>
+            <div class="hell-message delayed-2">your eternal room is ready</div>
+            <div class="hell-message delayed-3">⌇⌇⌇ souls currently in residence</div>
+            <div class="hell-background"></div>
+            <div class="soul-container"></div>
+            <div class="damned-counter">Tortured Souls: 0</div>
+            <div class="pentagram">
+              <svg viewBox="0 0 100 100">
+                <path d="M50 5 L95 90 L5 35 L95 35 L5 90 Z" fill="none" stroke="#ff0000" stroke-width="2"/>
+              </svg>
+            </div>
+            <div class="ritual-circle">
+              <svg viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="45" fill="none" stroke="#ff0000" stroke-width="0.5"/>
+                <path d="M50 5 C70 30 70 70 50 95 C30 70 30 30 50 5" fill="none" stroke="#ff0000" stroke-width="0.5"/>
+                <path d="M5 50 C30 70 70 70 95 50 C70 30 30 30 5 50" fill="none" stroke="#ff0000" stroke-width="0.5"/>
+              </svg>
+            </div>
+          </div>
+          <div class="torture-chamber">
+            <button class="torture-option">Eternal Screaming</button>
+            <button class="torture-option">Infinite Falling</button>
+            <button class="torture-option">Memory Erasure</button>
+            <button class="torture-option">Time Loop</button>
+          </div>
+        `;
         document.body.style.background = '#0a0a0a';
+        
+        // Start the subtle corruption of numbers
+        setInterval(() => {
+          const numberElement = document.querySelector('.hell-message:nth-child(4)');
+          if (numberElement) {
+            const num = Math.floor(Math.random() * 999999999).toString();
+            numberElement.textContent = num.split('').map(n => 
+              Math.random() < 0.3 ? '⌇' : n
+            ).join('') + ' souls currently in residence';
+          }
+        }, 100);
+        
+        initHellInteractions();
       }, 20000);
     });
   };
 
   initializeTrainStation();
 });
+
+const initHellInteractions = () => {
+  let torturedSouls = 0;
+  const soulContainer = document.querySelector('.soul-container');
+  const dammedCounter = document.querySelector('.damned-counter');
+  const tortureOptions = document.querySelectorAll('.torture-option');
+  const hellContainer = document.querySelector('.hell-container');
+
+  // Audio and other functions remain the same
+  const createHellAmbience = () => {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc1 = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const gain = ctx.createGain();
+    
+    osc1.type = 'sawtooth';
+    osc2.type = 'sine';
+    osc1.frequency.value = 33;
+    osc2.frequency.value = 66;
+    gain.gain.value = 0.015;
+    
+    osc1.connect(gain);
+    osc2.connect(gain);
+    gain.connect(ctx.destination);
+    
+    osc1.start();
+    osc2.start();
+    
+    setInterval(() => {
+      osc1.frequency.value = 33 + Math.random() * 10;
+      osc2.frequency.value = 66 + Math.random() * 20;
+    }, 1000);
+  };
+
+  const createScream = () => {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+    
+    filter.type = 'bandpass';
+    filter.frequency.value = 1000;
+    filter.Q.value = 10;
+    
+    osc.type = 'sawtooth';
+    osc.frequency.value = 800;
+    gain.gain.value = 0.015;
+    
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    
+    osc.start();
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1);
+    osc.stop(ctx.currentTime + 1);
+  };
+
+  const createEarPiercingScream = () => {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    // Create multiple oscillators for a more complex scream
+    const oscs = [];
+    const gains = [];
+    const filters = [];
+    
+    // Main scream frequencies
+    const freqs = [2000, 3000, 4000, 1500];
+    
+    freqs.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+      
+      // High-pitched sawtooth wave for harsh sound
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      
+      // Rapid frequency modulation for more terror
+      osc.frequency.linearRampToValueAtTime(freq * 1.5, ctx.currentTime + 0.1);
+      osc.frequency.linearRampToValueAtTime(freq * 0.8, ctx.currentTime + 0.2);
+      
+      // Bandpass filter to enhance screaming quality
+      filter.type = 'bandpass';
+      filter.frequency.value = freq;
+      filter.Q.value = 20;
+      
+      // Loud but not harmful volume
+      gain.gain.setValueAtTime(0.08, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 2);
+      
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.start();
+      osc.stop(ctx.currentTime + 2);
+      
+      oscs.push(osc);
+      gains.push(gain);
+      filters.push(filter);
+    });
+    
+    // Add distortion for extra scariness
+    const distortion = ctx.createWaveShaper();
+    function makeDistortionCurve(amount) {
+      const k = typeof amount === 'number' ? amount : 50;
+      const n_samples = 44100;
+      const curve = new Float32Array(n_samples);
+      const deg = Math.PI / 180;
+      
+      for (let i = 0; i < n_samples; ++i) {
+        const x = i * 2 / n_samples - 1;
+        curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x));
+      }
+      return curve;
+    }
+    
+    distortion.curve = makeDistortionCurve(400);
+    distortion.oversample = '4x';
+    
+    gains.forEach(gain => {
+      gain.disconnect();
+      gain.connect(distortion);
+      distortion.connect(ctx.destination);
+    });
+  };
+
+  // Initialize hell ambience
+  createHellAmbience();
+
+  // Create wandering soul
+  const createSoul = () => {
+    const soul = document.createElement('div');
+    soul.className = 'hell-soul';
+    soul.textContent = '☠';
+    soul.style.left = Math.random() * window.innerWidth + 'px';
+    soul.style.top = Math.random() * window.innerHeight + 'px';
+    
+    soul.addEventListener('click', () => {
+      document.querySelector('.torture-chamber').classList.add('active');
+      soul.classList.add('marked');
+    });
+    
+    soulContainer.appendChild(soul);
+    
+    // Make soul wander
+    setInterval(() => {
+      const x = parseFloat(soul.style.left);
+      const y = parseFloat(soul.style.top);
+      
+      soul.style.left = x + (Math.random() - 0.5) * 20 + 'px';
+      soul.style.top = y + (Math.random() - 0.5) * 20 + 'px';
+    }, 1000);
+  };
+
+  // Create initial souls
+  for (let i = 0; i < 10; i++) {
+    createSoul();
+  }
+
+  // Handle torture options
+  tortureOptions.forEach(option => {
+    option.addEventListener('click', () => {
+      const soul = document.querySelector('.hell-soul.marked');
+      if (soul && option.textContent === "Eternal Screaming") {
+        // Stop all animations and sounds
+        document.body.classList.remove('hell-mode');
+        const oldSounds = document.querySelectorAll('audio');
+        oldSounds.forEach(sound => sound.pause());
+        
+        // Play the ear-piercing scream
+        createEarPiercingScream();
+        
+        // Pause everything for 2 seconds
+        document.body.style.animation = 'none';
+        document.querySelectorAll('*').forEach(el => {
+          el.style.animationPlayState = 'paused';
+          el.style.transition = 'none';
+        });
+        
+        // Resume after 2 seconds
+        setTimeout(() => {
+          document.body.classList.add('hell-mode');
+          document.body.style.animation = '';
+          document.querySelectorAll('*').forEach(el => {
+            el.style.animationPlayState = '';
+            el.style.transition = '';
+          });
+          
+          // Continue with regular soul torture
+          soul.remove();
+          torturedSouls++;
+          dammedCounter.textContent = `Tortured Souls: ${torturedSouls}`;
+          document.querySelector('.torture-chamber').classList.remove('active');
+          
+          // Create screaming face effect
+          const face = document.createElement('div');
+          face.className = 'screaming-face';
+          face.textContent = '😱';
+          face.style.left = Math.random() * window.innerWidth + 'px';
+          face.style.top = Math.random() * window.innerHeight + 'px';
+          hellContainer.appendChild(face);
+          
+          setTimeout(() => {
+            face.classList.add('active');
+            setTimeout(() => face.remove(), 2000);
+          }, 100);
+          
+          // Create new soul to maintain population
+          setTimeout(createSoul, 2000);
+        }, 2000);
+      } else if (soul) {
+        // Handle other torture options as before
+        createScream();
+        soul.remove();
+        torturedSouls++;
+        dammedCounter.textContent = `Tortured Souls: ${torturedSouls}`;
+        document.querySelector('.torture-chamber').classList.remove('active');
+        
+        const face = document.createElement('div');
+        face.className = 'screaming-face';
+        face.textContent = '😱';
+        face.style.left = Math.random() * window.innerWidth + 'px';
+        face.style.top = Math.random() * window.innerHeight + 'px';
+        hellContainer.appendChild(face);
+        
+        setTimeout(() => {
+          face.classList.add('active');
+          setTimeout(() => face.remove(), 2000);
+        }, 100);
+        
+        setTimeout(createSoul, 2000);
+      }
+    });
+  });
+
+  // Make messages interactive
+  document.querySelectorAll('.hell-message').forEach(msg => {
+    msg.addEventListener('click', () => {
+      createScream();
+      msg.style.transform = 'scale(1.2) skew(10deg)';
+      setTimeout(() => {
+        msg.style.transform = '';
+      }, 500);
+    });
+  });
+};
